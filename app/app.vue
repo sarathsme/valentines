@@ -11,23 +11,119 @@
       @start="startExperience"
     />
 
-    <main v-else class="container" aria-label="Valentine experience">
-      <TimelineStory />
-      <EnvelopeKisses />
-      <LoveLetter />
-      <YesNoChoice />
-      <FinalScreen />
+    <main
+      v-else
+      ref="stageEl"
+      class="stage"
+      aria-label="Valentine experience"
+    >
+      <section class="panel" aria-label="Timeline stage">
+        <div ref="timelineScrollEl" class="panelScroll">
+          <TimelineStory />
+        </div>
+      </section>
+
+      <section class="panel" aria-label="Envelope stage">
+        <EnvelopeKisses />
+      </section>
     </main>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { onBeforeUnmount, onMounted, ref } from 'vue'
 
 const started = ref(false)
 const musicPlaying = ref(false)
 
 const audioEl = ref<HTMLAudioElement | null>(null)
+
+const stageEl = ref<HTMLElement | null>(null)
+const timelineScrollEl = ref<HTMLElement | null>(null)
+
+let activeLock = false
+let lastSnapAt = 0
+
+function snapToEnvelope() {
+  const now = Date.now()
+  // debounce so trackpads don't trigger multiple snaps
+  if (now - lastSnapAt < 700) return
+  lastSnapAt = now
+
+  const el = stageEl.value
+  if (!el) return
+  el.scrollTo({ top: el.clientHeight, behavior: 'smooth' })
+}
+
+onMounted(() => {
+  const stage = stageEl.value
+  const timeline = timelineScrollEl.value
+  if (!stage || !timeline) return
+
+  const prefersReduced = window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches
+
+  // Wheel: if user scrolls down and timeline is already at the bottom, snap to envelope.
+  const onWheel = (e: WheelEvent) => {
+    if (activeLock) return
+    if (e.deltaY <= 0) return
+
+    const atBottom = timeline.scrollTop + timeline.clientHeight >= timeline.scrollHeight - 2
+    const alreadyOnEnvelope = stage.scrollTop >= stage.clientHeight * 0.5
+
+    if (!alreadyOnEnvelope && atBottom) {
+      e.preventDefault()
+      activeLock = true
+      if (prefersReduced) {
+        stage.scrollTop = stage.clientHeight
+        activeLock = false
+      } else {
+        snapToEnvelope()
+        window.setTimeout(() => {
+          activeLock = false
+        }, 520)
+      }
+    }
+  }
+
+  // Touch: detect upward swipe when timeline is at bottom, then snap.
+  let touchStartY = 0
+  const onTouchStart = (e: TouchEvent) => {
+    touchStartY = e.touches[0]?.clientY ?? 0
+  }
+  const onTouchMove = (e: TouchEvent) => {
+    if (activeLock) return
+    const y = e.touches[0]?.clientY ?? 0
+    const dy = touchStartY - y
+    if (dy <= 0) return
+
+    const atBottom = timeline.scrollTop + timeline.clientHeight >= timeline.scrollHeight - 2
+    const alreadyOnEnvelope = stage.scrollTop >= stage.clientHeight * 0.5
+    if (!alreadyOnEnvelope && atBottom) {
+      e.preventDefault()
+      activeLock = true
+      if (prefersReduced) {
+        stage.scrollTop = stage.clientHeight
+        activeLock = false
+      } else {
+        snapToEnvelope()
+        window.setTimeout(() => {
+          activeLock = false
+        }, 520)
+      }
+    }
+  }
+
+  // Important: passive must be false to allow preventDefault.
+  stage.addEventListener('wheel', onWheel, { passive: false })
+  stage.addEventListener('touchstart', onTouchStart, { passive: true })
+  stage.addEventListener('touchmove', onTouchMove, { passive: false })
+
+  onBeforeUnmount(() => {
+    stage.removeEventListener('wheel', onWheel as any)
+    stage.removeEventListener('touchstart', onTouchStart as any)
+    stage.removeEventListener('touchmove', onTouchMove as any)
+  })
+})
 
 async function startExperience() {
   started.value = true
@@ -158,12 +254,34 @@ body {
   padding: 18px 14px 28px;
 }
 
-.container {
+/*
+  Two-stage scroller:
+  - Stage itself is the viewport-height scroll container.
+  - Panel 1: timeline scrolls internally.
+  - Panel 2: full-screen envelope.
+*/
+.stage {
   width: 100%;
   max-width: 520px;
   margin: 0 auto;
-  display: grid;
-  gap: 14px;
+
+  height: calc(100dvh - 18px - 28px);
+  overflow-y: auto;
+  overflow-x: hidden;
+  scroll-snap-type: y mandatory;
+  border-radius: 18px;
+}
+
+.panel {
+  height: 100%;
+  min-height: 100%;
+  scroll-snap-align: start;
+}
+
+.panelScroll {
+  height: 100%;
+  overflow-y: auto;
+  padding: 0;
 }
 
 @media (min-width: 640px) {
@@ -171,8 +289,8 @@ body {
     padding: 28px 18px 40px;
   }
 
-  .container {
-    gap: 16px;
+  .stage {
+    height: calc(100dvh - 28px - 40px);
   }
 }
 </style>
