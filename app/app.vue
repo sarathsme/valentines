@@ -24,17 +24,18 @@
       </section>
 
       <section class="panel" aria-label="Envelope stage">
-        <EnvelopeKisses />
+        <EnvelopeKisses :active="currentPanel === 'envelope'" />
       </section>
     </main>
   </div>
 </template>
 
 <script setup lang="ts">
-import { onBeforeUnmount, onMounted, ref } from 'vue'
+import { nextTick, onBeforeUnmount, ref, watch } from 'vue'
 
 const started = ref(false)
 const musicPlaying = ref(false)
+const currentPanel = ref<'timeline' | 'envelope'>('timeline')
 
 const audioEl = ref<HTMLAudioElement | null>(null)
 
@@ -55,7 +56,13 @@ function snapToEnvelope() {
   el.scrollTo({ top: el.clientHeight, behavior: 'smooth' })
 }
 
-onMounted(() => {
+// Set up scroll listeners after the experience starts (stage element renders)
+watch(started, async (isStarted) => {
+  if (!isStarted) return
+
+  // Wait for next tick so the DOM updates and refs are available
+  await nextTick()
+
   const stage = stageEl.value
   const timeline = timelineScrollEl.value
   if (!stage || !timeline) return
@@ -118,10 +125,18 @@ onMounted(() => {
   stage.addEventListener('touchstart', onTouchStart, { passive: true })
   stage.addEventListener('touchmove', onTouchMove, { passive: false })
 
+  // Track which panel is currently visible to toggle EnvelopeKisses active state
+  const onScroll = () => {
+    const threshold = stage.clientHeight * 0.5
+    currentPanel.value = stage.scrollTop >= threshold ? 'envelope' : 'timeline'
+  }
+  stage.addEventListener('scroll', onScroll, { passive: true })
+
   onBeforeUnmount(() => {
     stage.removeEventListener('wheel', onWheel as any)
     stage.removeEventListener('touchstart', onTouchStart as any)
     stage.removeEventListener('touchmove', onTouchMove as any)
+    stage.removeEventListener('scroll', onScroll)
   })
 })
 
