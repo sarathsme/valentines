@@ -1,66 +1,82 @@
 <template>
-  <Transition name="letter">
-    <section v-if="open" class="letter" aria-label="Love Letter">
-      <div class="paper">
-        <p class="question">Will you be my Valentine?</p>
-      </div>
-    </section>
-  </Transition>
+  <div class="letter-container" :data-open="open ? 'true' : 'false'">
+    <div class="paper" aria-label="Love Letter">
+      <p class="question">Will you be my Valentine?</p>
+    </div>
+  </div>
 </template>
 
 <script setup lang="ts">
 defineProps<{
-  /** When true, the letter slides into view */
+  /** When true, the letter slides up out of the envelope */
   open: boolean
 }>()
 </script>
 
 <style scoped>
-.letter {
-  position: fixed;
-  inset: 0;
-  z-index: 100;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 24px;
-  background: rgba(0, 0, 0, 0.6);
-  backdrop-filter: blur(8px);
+.letter-container {
+  position: absolute;
+  left: 10%;
+  right: 10%;
+  bottom: 45%; /* Start higher up, inside the envelope */
+  top: 5%;
+  z-index: 3; /* Between flap and envelope-front */
+  pointer-events: none;
+  overflow: hidden; /* Clip the paper so it doesn't leak below */
+  transition: overflow 0s linear 0ms;
+}
+
+/* Allow overflow when open so paper can slide out */
+.letter-container[data-open='true'] {
+  overflow: visible;
+  transition: overflow 0s linear 300ms; /* Delay overflow:visible until animation starts */
 }
 
 .paper {
-  width: 100%;
-  max-width: 340px;
-  min-height: 280px;
-  padding: 40px 28px;
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 180%;
+  padding: 24px 16px;
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: center;
+  padding-top: 28px;
 
-  /* Paper-like appearance */
-  background: linear-gradient(
+  /* Solid paper background - no transparency */
+  background-color: #f9f6f0;
+  background-image: linear-gradient(
     180deg,
     #fdfbf7 0%,
     #f9f6f0 50%,
     #f5f1e8 100%
   );
-  border-radius: 6px;
+  border-radius: 4px;
   box-shadow:
-    0 30px 80px rgba(0, 0, 0, 0.35),
-    0 10px 30px rgba(0, 0, 0, 0.2),
+    0 2px 8px rgba(0, 0, 0, 0.15),
     inset 0 1px 0 rgba(255, 255, 255, 0.8),
     inset 0 -1px 0 rgba(0, 0, 0, 0.05);
 
-  /* Subtle paper texture via noise */
-  background-image:
-    url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
-  background-blend-mode: soft-light;
-  background-size: cover, 200px 200px;
+  /* Start hidden inside envelope */
+  transform: translateY(60%);
+  transition: transform 600ms cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+/* Letter slides up when open */
+.letter-container[data-open='true'] .paper {
+  transform: translateY(-10%);
+  box-shadow:
+    0 20px 50px rgba(0, 0, 0, 0.3),
+    0 8px 20px rgba(0, 0, 0, 0.15),
+    inset 0 1px 0 rgba(255, 255, 255, 0.8),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.05);
+  pointer-events: auto;
 }
 
 .question {
   margin: 0;
-  font-size: 22px;
+  font-size: 16px;
   font-weight: 600;
   line-height: 1.4;
   text-align: center;
@@ -68,68 +84,22 @@ defineProps<{
   letter-spacing: -0.01em;
 }
 
-/* Slide-up animation */
-.letter-enter-active {
-  transition: opacity 400ms ease;
-}
-
-.letter-enter-active .paper {
-  transition: transform 500ms cubic-bezier(0.22, 1, 0.36, 1), opacity 400ms ease;
-}
-
-.letter-leave-active {
-  transition: opacity 300ms ease;
-}
-
-.letter-leave-active .paper {
-  transition: transform 300ms ease, opacity 300ms ease;
-}
-
-.letter-enter-from {
-  opacity: 0;
-}
-
-.letter-enter-from .paper {
-  opacity: 0;
-  transform: translateY(80px) scale(0.95);
-}
-
-.letter-leave-to {
-  opacity: 0;
-}
-
-.letter-leave-to .paper {
-  opacity: 0;
-  transform: translateY(40px) scale(0.98);
-}
-
 /* Respect reduced motion */
 @media (prefers-reduced-motion: reduce) {
-  .letter-enter-active,
-  .letter-enter-active .paper,
-  .letter-leave-active,
-  .letter-leave-active .paper {
+  .paper {
     transition: none;
-  }
-
-  .letter-enter-from,
-  .letter-enter-from .paper,
-  .letter-leave-to,
-  .letter-leave-to .paper {
-    transform: none;
   }
 }
 
 /* Larger screens */
 @media (min-width: 480px) {
   .paper {
-    max-width: 400px;
-    min-height: 320px;
-    padding: 48px 36px;
+    padding: 28px 20px;
+    padding-top: 32px;
   }
 
   .question {
-    font-size: 26px;
+    font-size: 18px;
   }
 }
 </style>

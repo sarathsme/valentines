@@ -32,22 +32,33 @@
 
     <!-- Envelope -->
     <div class="envelope-wrapper">
-      <button
+      <div
         class="envelope"
-        type="button"
         :data-unlocked="unlocked ? 'true' : 'false'"
         :data-opened="letterOpen ? 'true' : 'false'"
-        :aria-disabled="unlocked ? 'false' : 'true'"
-        @pointerdown.prevent="onEnvelopeTap"
       >
-        <!-- Flap (triangle) -->
-        <div class="flap"></div>
-        <!-- Base rectangle -->
-        <div class="body"></div>
-      </button>
+        <!-- Back of envelope (behind letter) -->
+        <div class="envelope-back"></div>
 
-      <!-- Letter slides up from envelope -->
-      <LoveLetter :open="letterOpen" />
+        <!-- Flap (behind letter when closed, visible when open) -->
+        <div class="flap"></div>
+
+        <!-- Letter slides up from inside -->
+        <LoveLetter :open="letterOpen" />
+
+        <!-- Front of envelope (covers bottom of letter) -->
+        <div class="envelope-front"></div>
+
+        <!-- Tap target button -->
+        <button
+          class="envelope-tap"
+          type="button"
+          :aria-disabled="unlocked ? 'false' : 'true'"
+          @pointerdown.prevent="onEnvelopeTap"
+        >
+          <span class="sr-only">{{ unlocked ? 'Open envelope' : 'Collect all hearts first' }}</span>
+        </button>
+      </div>
     </div>
   </section>
 </template>
@@ -205,9 +216,23 @@ function onEnvelopeTap() {
 .envelope {
   position: relative;
   width: min(280px, 70vw);
-  aspect-ratio: 1.5 / 1;
+  aspect-ratio: 1.875 / 1;
   animation: wiggle-pause 2.0s ease-in-out infinite;
+}
 
+.envelope[data-unlocked='true'] {
+  animation: none;
+}
+
+.envelope[data-opened='true'] {
+  animation: none;
+}
+
+/* Tap target covers the whole envelope */
+.envelope-tap {
+  position: absolute;
+  inset: 0;
+  z-index: 10;
   background: transparent;
   border: 0;
   padding: 0;
@@ -215,24 +240,72 @@ function onEnvelopeTap() {
   -webkit-tap-highlight-color: transparent;
 }
 
-.envelope[data-unlocked='true'] {
+.envelope[data-unlocked='true'] .envelope-tap {
   cursor: pointer;
 }
 
-.envelope[data-unlocked='true']:focus-visible {
+.envelope[data-unlocked='true'] .envelope-tap:focus-visible {
   outline: 3px solid rgba(255, 255, 255, 0.35);
   outline-offset: 6px;
   border-radius: 14px;
 }
 
-.envelope[data-unlocked='true'] {
-  animation: none;
+/* Hide tap target when letter is open */
+.envelope[data-opened='true'] .envelope-tap {
+  pointer-events: none;
 }
 
-/* Envelope body (rectangle) */
-.body {
+/* Screen reader only text */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* Back of envelope (behind everything) */
+.envelope-back {
   position: absolute;
   inset: 0;
+  z-index: 1;
+  background: linear-gradient(180deg, #e0d0bc 0%, #d4c4ae 100%);
+  border-radius: 4px 4px 12px 12px;
+}
+
+/* Envelope flap (triangle) - on top when closed */
+.flap {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 60%;
+  z-index: 5; /* On top of everything when closed */
+  background: linear-gradient(180deg, #e8d4be 0%, #dcc9b3 100%);
+  clip-path: polygon(0 0, 100% 0, 50% 100%);
+  transform-origin: top center;
+  transition: transform 400ms ease-out, z-index 0s linear 200ms;
+}
+
+/* Flap opens and goes behind when opened */
+.envelope[data-opened='true'] .flap {
+  transform: rotateX(180deg);
+  z-index: 1; /* Goes behind everything when open */
+  transition: transform 400ms ease-out, z-index 0s linear 0ms;
+}
+
+/* Front of envelope (covers full body, in front of letter) */
+.envelope-front {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  top: 0;
+  z-index: 4;
   background: linear-gradient(180deg, #f5e6d3 0%, #e8d4be 100%);
   border-radius: 4px 4px 12px 12px;
   box-shadow:
@@ -241,36 +314,15 @@ function onEnvelopeTap() {
     inset 0 -4px 12px rgba(0, 0, 0, 0.05);
 }
 
-/* Envelope flap (triangle) */
-.flap {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 60%;
-  background: linear-gradient(180deg, #e8d4be 0%, #dcc9b3 100%);
-  clip-path: polygon(0 0, 100% 0, 50% 100%);
-  transform-origin: top center;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-  z-index: 1;
-  transition: transform 400ms ease-out;
-}
-
-/* Flap opens when envelope is tapped */
-.envelope[data-opened='true'] .flap {
-  transform: rotateX(180deg);
-}
-
-/* Inner shadow line on body to simulate depth under flap */
-.body::before {
+/* Top edge shadow on front */
+.envelope-front::before {
   content: '';
   position: absolute;
   top: 0;
-  left: 10%;
-  right: 10%;
-  height: 2px;
+  left: 5%;
+  right: 5%;
+  height: 1px;
   background: rgba(0, 0, 0, 0.08);
-  border-radius: 1px;
 }
 
 /* Subtle seal/heart decoration */
