@@ -2,7 +2,7 @@
   <section class="section" aria-label="Letter">
     <!-- Floating hearts (fixed to viewport) -->
     <button
-      v-for="heart in active ? hearts : []"
+      v-for="heart in (active ? hearts : [])"
       :key="heart.id"
       class="heart"
       type="button"
