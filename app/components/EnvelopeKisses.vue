@@ -177,6 +177,7 @@ function onEnvelopeTap() {
 /* Text */
 .text-container {
   text-align: center;
+  margin-bottom: 80px;
 }
 
 .title {
