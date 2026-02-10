@@ -36,6 +36,7 @@
         class="envelope"
         type="button"
         :data-unlocked="unlocked ? 'true' : 'false'"
+        :data-opened="letterOpen ? 'true' : 'false'"
         :aria-disabled="unlocked ? 'false' : 'true'"
         @pointerdown.prevent="onEnvelopeTap"
       >
@@ -44,6 +45,9 @@
         <!-- Base rectangle -->
         <div class="body"></div>
       </button>
+
+      <!-- Letter slides up from envelope -->
+      <LoveLetter :open="letterOpen" />
     </div>
   </section>
 </template>
@@ -74,6 +78,7 @@ type Heart = {
 }
 
 const hearts = ref<Heart[]>([])
+const letterOpen = ref(false)
 
 function clamp(n: number, min: number, max: number) {
   return Math.min(max, Math.max(min, n))
@@ -137,6 +142,7 @@ function collectHeart(id: number) {
 
 function onEnvelopeTap() {
   if (!unlocked.value) return
+  letterOpen.value = true
   emit('open')
 }
 </script>
@@ -247,6 +253,12 @@ function onEnvelopeTap() {
   transform-origin: top center;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
   z-index: 1;
+  transition: transform 400ms ease-out;
+}
+
+/* Flap opens when envelope is tapped */
+.envelope[data-opened='true'] .flap {
+  transform: rotateX(180deg);
 }
 
 /* Inner shadow line on body to simulate depth under flap */
@@ -380,6 +392,10 @@ function onEnvelopeTap() {
 @media (prefers-reduced-motion: reduce) {
   .envelope {
     animation: none;
+  }
+
+  .flap {
+    transition: none;
   }
 
   .heart {
