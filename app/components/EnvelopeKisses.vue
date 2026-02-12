@@ -60,6 +60,39 @@
         </button>
       </div>
     </div>
+
+    <!-- Yes/No choice (after letter reveal) -->
+    <div v-if="letterOpen" class="choice" aria-label="Valentine choice">
+      <div class="choiceRow" role="group" aria-label="Yes or No">
+        <button
+          class="btn btn--primary choiceBtn choiceBtn--yes"
+          type="button"
+          :disabled="choiceLocked"
+          :aria-disabled="choiceLocked ? 'true' : 'false'"
+          :style="{
+            transform: `scale(${yesScale})`,
+            '--yes-scale': String(yesScale),
+          }"
+          @pointerdown.prevent="onYesPointer"
+          @click.prevent="onYesClick"
+        >
+          Yes
+        </button>
+
+        <button
+          class="btn btn--ghost choiceBtn choiceBtn--no"
+          type="button"
+          :disabled="choiceLocked"
+          :aria-disabled="choiceLocked ? 'true' : 'false'"
+          @pointerdown.prevent="onNoPointer"
+          @click.prevent="onNoClick"
+        >
+          <Transition name="msgfade" mode="out-in">
+            <span :key="noClickCount" aria-live="polite">{{ currentMessage }}</span>
+          </Transition>
+        </button>
+      </div>
+    </div>
   </section>
 </template>
 
@@ -76,6 +109,7 @@ const props = withDefaults(
 
 const emit = defineEmits<{
   open: []
+  yes: []
 }>()
 
 const TOTAL_HEARTS = 5 as const
@@ -90,6 +124,22 @@ type Heart = {
 
 const hearts = ref<Heart[]>([])
 const letterOpen = ref(false)
+
+const noMessages = [
+  'No',
+  'are you sure?',
+  'pretty please!',
+  'This could be a mistake',
+  'you are breaking my heart :(',
+  'No!! Dont click me',
+] as const
+
+const noClickCount = ref(0)
+const yesScale = ref(1)
+const currentMessage = ref<string>(noMessages[0] ?? '')
+const choiceLocked = ref(false)
+
+const lastPointerAt = ref(0)
 
 function clamp(n: number, min: number, max: number) {
   return Math.min(max, Math.max(min, n))
@@ -156,13 +206,50 @@ function onEnvelopeTap() {
   letterOpen.value = true
   emit('open')
 }
+
+function updateNoMessage() {
+  const idx = Math.min(noClickCount.value, noMessages.length - 1)
+  currentMessage.value = noMessages[idx] ?? ''
+}
+
+function handleNo() {
+  if (choiceLocked.value) return
+  noClickCount.value += 1
+  updateNoMessage()
+  yesScale.value = clamp(yesScale.value + 0.08, 1, 1.6)
+}
+
+function handleYes() {
+  if (choiceLocked.value) return
+  choiceLocked.value = true
+  emit('yes')
+}
+
+function onNoPointer() {
+  lastPointerAt.value = Date.now()
+  handleNo()
+}
+
+function onNoClick() {
+  if (Date.now() - lastPointerAt.value < 450) return
+  handleNo()
+}
+
+function onYesPointer() {
+  lastPointerAt.value = Date.now()
+  handleYes()
+}
+
+function onYesClick() {
+  if (Date.now() - lastPointerAt.value < 450) return
+  handleYes()
+}
 </script>
 
 <style scoped>
 .section {
-  height: 100vh;
-  height: 100dvh;
-  min-height: 100dvh;
+  height: 100%;
+  min-height: 100%;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -211,6 +298,65 @@ function onEnvelopeTap() {
   display: flex;
   align-items: center;
   justify-content: center;
+}
+
+/* Choice UI */
+.choice {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  padding-top: 4px;
+}
+
+.choiceRow {
+  width: min(360px, 100%);
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: center;
+  gap: 12px;
+}
+
+.choiceBtn {
+  flex: 1 1 0;
+  min-width: 0;
+}
+
+.choiceBtn--yes {
+  transition: transform 250ms ease, box-shadow 250ms ease, filter 250ms ease;
+  will-change: transform;
+  transform-origin: center;
+  position: relative;
+  z-index: 1;
+
+  /* Subtle glow that increases with --yes-scale */
+  box-shadow:
+    0 14px 34px rgba(255, 46, 103, 0.20),
+    0 0 calc(14px + (var(--yes-scale, 1) - 1) * 20px) rgba(11, 59, 255, 0.18),
+    0 0 calc(10px + (var(--yes-scale, 1) - 1) * 16px) rgba(255, 46, 103, 0.18),
+    0 0 0 1px rgba(70, 10, 26, 0.55) inset;
+}
+
+.choiceBtn--no {
+  position: relative;
+  z-index: 2; /* keep No visible/clickable if Yes grows */
+  flex-direction: column;
+  gap: 4px;
+  padding-top: 10px;
+  padding-bottom: 10px;
+}
+
+/* Message fade transition */
+.msgfade-enter-active,
+.msgfade-leave-active {
+  transition: opacity 180ms ease;
+}
+
+.msgfade-enter-from,
+.msgfade-leave-to {
+  opacity: 0;
 }
 
 /* Envelope container */
@@ -458,6 +604,11 @@ function onEnvelopeTap() {
   }
 
   .heart[data-collected='true'] {
+    transition: none;
+  }
+
+  .msgfade-enter-active,
+  .msgfade-leave-active {
     transition: none;
   }
 }
