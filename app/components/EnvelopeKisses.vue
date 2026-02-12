@@ -70,8 +70,8 @@
           :disabled="choiceLocked"
           :aria-disabled="choiceLocked ? 'true' : 'false'"
           :style="{
-            transform: `scale(${yesScale})`,
-            '--yes-scale': String(yesScale),
+            transform: `scaleX(${1 + (yesScale - 1) * 0.18}) scaleY(${1 + (yesScale - 1) * 1.25})`,
+            '--yes-scale': String(1 + (yesScale - 1) * 1.25),
           }"
           @pointerdown.prevent="onYesPointer"
           @click.prevent="onYesClick"
@@ -216,7 +216,7 @@ function handleNo() {
   if (choiceLocked.value) return
   noClickCount.value += 1
   updateNoMessage()
-  yesScale.value = clamp(yesScale.value + 0.08, 1, 1.6)
+  yesScale.value = clamp(yesScale.value + 0.14, 1, 1.85)
 }
 
 function handleYes() {
@@ -330,6 +330,12 @@ function onYesClick() {
   transform-origin: center;
   position: relative;
   z-index: 1;
+
+  /* Grow in actual layout height as Yes grows */
+  min-height: calc(48px + (var(--yes-scale, 1) - 1) * 26px);
+  padding-top: calc(12px + (var(--yes-scale, 1) - 1) * 10px);
+  padding-bottom: calc(12px + (var(--yes-scale, 1) - 1) * 10px);
+  margin-bottom: calc((var(--yes-scale, 1) - 1) * 6px);
 
   /* Subtle glow that increases with --yes-scale */
   box-shadow:
