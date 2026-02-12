@@ -421,7 +421,7 @@ function onYesClick() {
   width: min(320px, 78vw);
   height: auto;
   border-radius: 18px;
-  transform: translateY(-55px);
+  transform: translateY(-45px);
 }
 
 /* Text */

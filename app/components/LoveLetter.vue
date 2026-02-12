@@ -1,6 +1,7 @@
 <template>
   <div class="letter-container" :data-open="open ? 'true' : 'false'">
     <div class="paper" aria-label="Love Letter">
+      <p class="greeting">Hi Baby,</p>
       <p class="question">Will you be my Valentine?</p>
     </div>
   </div>
@@ -40,8 +41,9 @@ defineProps<{
   height: 180%;
   padding: 24px 16px;
   display: flex;
+  flex-direction: column;
   align-items: flex-start;
-  justify-content: center;
+  justify-content: flex-start;
   padding-top: 28px;
 
   /* Solid paper background - no transparency */
@@ -65,7 +67,7 @@ defineProps<{
 
 /* Letter slides up when open */
 .letter-container[data-open='true'] .paper {
-  transform: translateY(-10%);
+  transform: translateY(-35%);
   box-shadow:
     0 20px 50px rgba(0, 0, 0, 0.3),
     0 8px 20px rgba(0, 0, 0, 0.15),
@@ -79,7 +81,17 @@ defineProps<{
   font-size: 16px;
   font-weight: 600;
   line-height: 1.4;
-  text-align: center;
+  text-align: left;
+  color: #3a2f2a;
+  letter-spacing: -0.01em;
+}
+
+.greeting {
+  margin: 0 0 14px;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1.4;
+  text-align: left;
   color: #3a2f2a;
   letter-spacing: -0.01em;
 }
@@ -96,6 +108,10 @@ defineProps<{
   .paper {
     padding: 28px 20px;
     padding-top: 32px;
+  }
+
+  .greeting {
+    font-size: 16px;
   }
 
   .question {
