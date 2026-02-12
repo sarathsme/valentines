@@ -48,6 +48,7 @@
     <!-- Envelope -->
     <div class="envelope-wrapper">
       <div
+        ref="envelopeEl"
         class="envelope"
         :data-unlocked="unlocked ? 'true' : 'false'"
         :data-opened="letterOpen ? 'true' : 'false'"
@@ -75,6 +76,23 @@
         </button>
       </div>
     </div>
+
+    <!-- Decorative burst when envelope opens -->
+    <span
+      v-for="b in burstHearts"
+      :key="b.id"
+      class="burstHeart"
+      aria-hidden="true"
+      :style="{
+        left: b.left,
+        top: b.top,
+        '--dx': b.dx + 'px',
+        '--dy': b.dy + 'px',
+        '--delay': b.delay + 'ms',
+      }"
+    >
+      ❤️
+    </span>
 
     <!-- Yes/No choice (after letter reveal) -->
     <div v-if="letterOpen" class="choice" aria-label="Valentine choice">
@@ -140,6 +158,19 @@ type Heart = {
 
 const hearts = ref<Heart[]>([])
 const letterOpen = ref(false)
+
+type BurstHeart = {
+  id: number
+  left: string
+  top: string
+  dx: number
+  dy: number
+  delay: number
+}
+
+const envelopeEl = ref<HTMLElement | null>(null)
+const burstHearts = ref<BurstHeart[]>([])
+let burstTimer = 0
 
 
 const noMessages = [
@@ -273,6 +304,7 @@ function launchConfetti() {
 
 onBeforeUnmount(() => {
   if (confettiRaf) cancelAnimationFrame(confettiRaf)
+  if (typeof window !== 'undefined' && burstTimer) window.clearTimeout(burstTimer)
 })
 
 function clamp(n: number, min: number, max: number) {
@@ -338,7 +370,41 @@ function collectHeart(id: number) {
 function onEnvelopeTap() {
   if (!unlocked.value) return
   letterOpen.value = true
+  spawnOpenBurst()
   emit('open')
+}
+
+function spawnOpenBurst() {
+  if (typeof window === 'undefined') return
+
+  const prefersReduced = window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches
+  if (prefersReduced) return
+
+  const el = envelopeEl.value
+  if (!el) return
+
+  const rect = el.getBoundingClientRect()
+  const originX = rect.left + rect.width * 0.5
+  const originY = rect.top + rect.height * 0.28
+
+  const count = 9
+  burstHearts.value = Array.from({ length: count }, (_, i) => {
+    const dx = (Math.random() - 0.5) * 180
+    const dy = -(60 + Math.random() * 140)
+    return {
+      id: Date.now() + i,
+      left: `${originX}px`,
+      top: `${originY}px`,
+      dx,
+      dy,
+      delay: i * 70,
+    }
+  })
+
+  if (burstTimer) window.clearTimeout(burstTimer)
+  burstTimer = window.setTimeout(() => {
+    burstHearts.value = []
+  }, 1700)
 }
 
 function updateNoMessage() {
@@ -405,6 +471,34 @@ function onYesClick() {
   inset: 0;
   z-index: 999;
   pointer-events: none;
+}
+
+.burstHeart {
+  position: fixed;
+  z-index: 55;
+  pointer-events: none;
+  transform: translate(-50%, -50%);
+  font-size: 22px;
+  opacity: 0;
+  animation: burstHeartUp 1400ms cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  animation-delay: var(--delay, 0ms);
+  will-change: transform, opacity;
+  filter: drop-shadow(0 6px 14px rgba(0, 0, 0, 0.25));
+}
+
+@keyframes burstHeartUp {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.85);
+  }
+  12% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translate(calc(-50% + var(--dx, 0px)), calc(-50% + var(--dy, -120px)))
+      scale(1.22);
+  }
 }
 
 .yesGifWrap {
