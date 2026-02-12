@@ -2,14 +2,7 @@
 export default defineNuxtConfig({
   ssr: false,
   app: {
-    baseURL: '/valentines/',
-     buildAssetsDir: '_nuxt/',
-    cdnURL: '/valentines/'
-  },
-  nitro: {
-    output: {
-      publicDir: 'docs'
-    }
+    baseURL: '/valentines/'
   },
   compatibilityDate: '2025-07-15',
   devtools: { enabled: true }
