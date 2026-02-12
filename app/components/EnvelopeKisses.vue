@@ -36,13 +36,13 @@
 
     <!-- Text above envelope -->
     <div class="text-container">
-      <h2 class="title">I want to ask you something…</h2>
-      <p class="subtitle">Collect 5 hearts to open envelope 💋</p>
+      <h2 class="title">{{ saidYes ? 'Love you so much my valentine' : 'I want to ask you something…' }}</h2>
+      <p v-if="!unlocked" class="subtitle">Collect 5 hearts to open envelope 💋</p>
 
       <p v-if="!unlocked" class="progress" aria-live="polite">
         {{ collectedCount }} / {{ TOTAL_HEARTS }} hearts
       </p>
-      <p v-else class="progress progress--ready" aria-live="polite">Tap the envelope</p>
+      <p v-else-if="!letterOpen" class="progress progress--ready" aria-live="polite">Tap the envelope</p>
     </div>
 
     <!-- Envelope -->
