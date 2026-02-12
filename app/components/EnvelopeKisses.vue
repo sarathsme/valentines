@@ -217,9 +217,17 @@ type ConfettiParticle = {
   rot: number
   vr: number
   color: string
+  bornAt: number
+  lifeMs: number
 }
 
-function launchConfetti() {
+type ConfettiOptions = {
+  bursts?: number
+  burstGapMs?: number
+  perBurstCount?: number
+}
+
+function launchConfetti(options: ConfettiOptions = {}) {
   if (typeof window === 'undefined') return
 
   const prefersReduced = window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches
@@ -245,37 +253,59 @@ function launchConfetti() {
   const originX = w * 0.5
   const originY = h * 0.42
 
-  const count = 120
-  const particles: ConfettiParticle[] = Array.from({ length: count }, () => {
-    const a = Math.random() * Math.PI * 2
-    const size = 3 + Math.random() * 7
-    const speed = 3.4 + Math.random() * 5.8
-    return {
-      x: originX,
-      y: originY,
-      vx: Math.cos(a) * speed,
-      vy: Math.sin(a) * speed - (3.2 + Math.random() * 2.4),
-      size,
-      rot: Math.random() * Math.PI,
-      vr: (Math.random() - 0.5) * 0.22,
-      color: palette[(Math.random() * palette.length) | 0]!,
+  const bursts = Math.max(1, Math.min(6, options.bursts ?? 1))
+  const burstGapMs = Math.max(80, Math.min(900, options.burstGapMs ?? 260))
+  const perBurstCount = Math.max(40, Math.min(220, options.perBurstCount ?? 120))
+
+  const particles: ConfettiParticle[] = []
+
+  function spawnBurst(bornAt: number) {
+    const lifeMs = 1050
+    for (let i = 0; i < perBurstCount; i += 1) {
+      const a = Math.random() * Math.PI * 2
+      const size = 3 + Math.random() * 7
+      const speed = 3.4 + Math.random() * 5.8
+      particles.push({
+        x: originX,
+        y: originY,
+        vx: Math.cos(a) * speed,
+        vy: Math.sin(a) * speed - (3.2 + Math.random() * 2.4),
+        size,
+        rot: Math.random() * Math.PI,
+        vr: (Math.random() - 0.5) * 0.22,
+        color: palette[(Math.random() * palette.length) | 0]!,
+        bornAt,
+        lifeMs,
+      })
     }
-  })
+  }
 
   const gravity = 0.16
   const drag = 0.992
   const start = performance.now()
-  const durationMs = 1350
+  const durationMs = 1050 + burstGapMs * (bursts - 1) + 260
 
   if (confettiRaf) cancelAnimationFrame(confettiRaf)
+  let nextBurst = 0
 
   const tick = (t: number) => {
     const progress = Math.min(1, (t - start) / durationMs)
-    const alpha = 1 - progress
+
+    while (nextBurst < bursts && t - start >= nextBurst * burstGapMs) {
+      spawnBurst(t)
+      nextBurst += 1
+    }
 
     ctx.clearRect(0, 0, w, h)
 
+    let anyAlive = false
     for (const p of particles) {
+      const age = t - p.bornAt
+      if (age < 0 || age > p.lifeMs) continue
+      anyAlive = true
+
+      const alpha = 1 - age / p.lifeMs
+
       p.vx *= drag
       p.vy = p.vy * drag + gravity
       p.x += p.vx
@@ -291,7 +321,7 @@ function launchConfetti() {
       ctx.restore()
     }
 
-    if (progress < 1) {
+    if (progress < 1 || anyAlive || nextBurst < bursts) {
       confettiRaf = requestAnimationFrame(tick)
     } else {
       ctx.clearRect(0, 0, w, h)
@@ -426,7 +456,7 @@ function handleYes() {
   if (choiceLocked.value) return
   choiceLocked.value = true
   saidYes.value = true
-  launchConfetti()
+  launchConfetti({ bursts: 3 })
   emit('yes')
 }
 
