@@ -80,21 +80,21 @@ const items: StoryItem[] = [
     label: 'THEN',
     title: 'Meeting',
     text: 'A tiny moment that became our universe.',
-    imageSrc: '/story-meeting.svg',
+    imageSrc: '/story-meeting.jpg',
   },
   {
     id: 'first-date',
     label: 'THEN',
-    title: 'First Date',
+    title: 'Dhathri Meadows',
     text: 'The Start of Something Beautiful',
-    imageSrc: '/story-first-date.svg',
+    imageSrc: '/story-first-date.jpg',
   },
   {
     id: 'proposal',
     label: 'THEN',
     title: 'Proposal',
     text: 'Forever Started With a Yes',
-    imageSrc: '/story-proposal.svg',
+    imageSrc: '/story-proposal.jpg',
   },
   {
     id: 'wedding',
@@ -108,7 +108,7 @@ const items: StoryItem[] = [
     label: 'NOW',
     title: '',
     text: 'Still my favorite person. Still my home.',
-    imageSrc: '/story-today.svg',
+    imageSrc: '/story-today.jpg',
   },
 ]
 
