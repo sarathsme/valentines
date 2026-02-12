@@ -26,12 +26,10 @@
         <!-- Media + text alternate around the center line -->
         <article :ref="(el) => setItemRef(el, idx)" class="row">
           <div class="media">
-            <component
-              :is="imgComponent"
+            <img
               class="img"
-              :src="item.imageSrc"
+              :src="withBase(item.imageSrc)"
               :alt="item.title"
-              loading="lazy"
             />
           </div>
 
@@ -48,6 +46,7 @@
 
 <script setup lang="ts">
 import { onBeforeUnmount, onMounted, ref } from 'vue'
+import { joinURL } from 'ufo'
 
 type StoryItem = {
   id: string
@@ -61,6 +60,20 @@ type StoryItem = {
 // This keeps the component working without adding any dependencies.
 const imgComponent = 'NuxtImg' as any
 
+const runtimeConfig = useRuntimeConfig()
+
+function withBase(src: string) {
+  const trimmed = (src || '').trim()
+
+  // Leave absolute URLs / data URIs alone.
+  if (/^(https?:)?\/\//i.test(trimmed) || /^data:/i.test(trimmed)) return trimmed
+
+  const baseURL = runtimeConfig.app.baseURL || '/'
+  if (trimmed.startsWith(baseURL)) return trimmed
+
+  return joinURL(baseURL, trimmed)
+}
+
 const items: StoryItem[] = [
   {
     id: 'meeting',
@@ -73,14 +86,14 @@ const items: StoryItem[] = [
     id: 'first-date',
     label: 'THEN',
     title: 'First Date',
-    text: 'Butterflies and that “this is different” feeling.',
+    text: 'The Start of Something Beautiful',
     imageSrc: '/story-first-date.svg',
   },
   {
     id: 'proposal',
     label: 'THEN',
     title: 'Proposal',
-    text: 'The easiest yes — my heart choosing you.',
+    text: 'Forever Started With a Yes',
     imageSrc: '/story-proposal.svg',
   },
   {
@@ -88,12 +101,12 @@ const items: StoryItem[] = [
     label: 'THEN',
     title: 'Wedding',
     text: 'A promise, and the happiest kind of calm.',
-    imageSrc: '/story-wedding.svg',
+    imageSrc: '/story-wedding.JPG',
   },
   {
     id: 'today',
     label: 'NOW',
-    title: 'Today',
+    title: '',
     text: 'Still my favorite person. Still my home.',
     imageSrc: '/story-today.svg',
   },
