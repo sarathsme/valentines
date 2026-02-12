@@ -37,7 +37,7 @@
     <!-- Text above envelope -->
     <div class="text-container">
       <h2 class="title">I want to ask you something…</h2>
-      <p class="subtitle">Collect 5 hearts to open it 💋</p>
+      <p class="subtitle">Collect 5 hearts to open envelope 💋</p>
 
       <p v-if="!unlocked" class="progress" aria-live="polite">
         {{ collectedCount }} / {{ TOTAL_HEARTS }} hearts
@@ -99,6 +99,7 @@
           type="button"
           :disabled="choiceLocked"
           :aria-disabled="choiceLocked ? 'true' : 'false'"
+          :style="{ marginTop: noPushPx + 'px' }"
           @pointerdown.prevent="onNoPointer"
           @click.prevent="onNoClick"
         >
@@ -163,6 +164,13 @@ const yesScale = ref(1)
 const currentMessage = ref<string>(noMessages[0] ?? '')
 const choiceLocked = ref(false)
 const saidYes = ref(false)
+
+// Tuning knobs
+const YES_SCALE_MAX = 1.4
+const NO_PUSH_PER_CLICK_PX = 2
+const NO_PUSH_MAX_PX = 12
+
+const noPushPx = ref(0)
 
 const lastPointerAt = ref(0)
 
@@ -342,7 +350,10 @@ function handleNo() {
   if (choiceLocked.value) return
   noClickCount.value += 1
   updateNoMessage()
-  yesScale.value = clamp(yesScale.value + 0.14, 1, 1.85)
+  // Keep Yes from getting bigger beyond the "perfect" size.
+  yesScale.value = clamp(yesScale.value + 0.14, 1, YES_SCALE_MAX)
+  // Instead, keep pushing No further down.
+  noPushPx.value = clamp(noPushPx.value + NO_PUSH_PER_CLICK_PX, 0, NO_PUSH_MAX_PX)
 }
 
 function handleYes() {
@@ -503,6 +514,7 @@ function onYesClick() {
   gap: 4px;
   padding-top: 10px;
   padding-bottom: 10px;
+  transition: margin-top 220ms ease;
 }
 
 /* Message fade transition */
@@ -766,6 +778,10 @@ function onYesClick() {
 
   .msgfade-enter-active,
   .msgfade-leave-active {
+    transition: none;
+  }
+
+  .choiceBtn--no {
     transition: none;
   }
 }
