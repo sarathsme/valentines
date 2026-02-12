@@ -127,12 +127,20 @@ const letterOpen = ref(false)
 
 const noMessages = [
   'No',
-  'are you sure?',
-  'pretty please!',
-  'This could be a mistake',
-  'you are breaking my heart :(',
-  'No!! Dont click me',
+  'Are you sure?',
+  'Pretty please!',
+  'This could be a mistake!',
+  'You really wanna do this??',
+  'You are breaking my heart :( :(',
+  'Have a heart!',
+  'Is that your final answer??',
+  'Are you absolutely certain??',
+  'No!! Don\'t click me!!',
+  'Last chance!',
+  'You might regret this!',
+  'Oops, that button is broken, try other one...',
 ] as const
+
 
 const noClickCount = ref(0)
 const yesScale = ref(1)
