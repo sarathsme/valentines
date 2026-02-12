@@ -21,8 +21,8 @@
 
     <!-- Text above envelope -->
     <div class="text-container">
-      <h2 class="title">I want to tell you something…</h2>
-      <p class="subtitle">Collect 5 kisses to open it 💋</p>
+      <h2 class="title">I want to ask you something…</h2>
+      <p class="subtitle">Collect 5 hearts to open it 💋</p>
 
       <p v-if="!unlocked" class="progress" aria-live="polite">
         {{ collectedCount }} / {{ TOTAL_HEARTS }} hearts
