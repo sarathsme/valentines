@@ -36,7 +36,7 @@
 
     <!-- Text above envelope -->
     <div class="text-container">
-      <h2 class="title">{{ saidYes ? 'Love you so much my valentine' : 'I want to ask you something…' }}</h2>
+      <h2 class="title">{{ saidYes ? 'Love you so much my valentine!!' : 'I want to ask you something…' }}</h2>
       <p v-if="!unlocked" class="subtitle">Collect 5 hearts to open envelope 💋</p>
 
       <p v-if="!unlocked" class="progress" aria-live="polite">
@@ -421,6 +421,7 @@ function onYesClick() {
   width: min(320px, 78vw);
   height: auto;
   border-radius: 18px;
+  transform: translateY(-55px);
 }
 
 /* Text */
