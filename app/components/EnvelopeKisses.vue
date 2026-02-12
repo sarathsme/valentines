@@ -166,9 +166,9 @@ const choiceLocked = ref(false)
 const saidYes = ref(false)
 
 // Tuning knobs
-const YES_SCALE_MAX = 1.4
+const YES_SCALE_MAX = 1.6
 const NO_PUSH_PER_CLICK_PX = 2
-const NO_PUSH_MAX_PX = 12
+const NO_PUSH_MAX_PX = 14
 
 const noPushPx = ref(0)
 
