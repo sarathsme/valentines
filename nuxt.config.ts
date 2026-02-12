@@ -2,7 +2,8 @@
 export default defineNuxtConfig({
   ssr: false,
   app: {
-    baseURL: '/valentines/'
+    baseURL: '/valentines/',
+    cdnURL: '/valentines/'
   },
   nitro: {
     output: {
