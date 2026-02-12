@@ -3,6 +3,7 @@ export default defineNuxtConfig({
   ssr: false,
   app: {
     baseURL: '/valentines/',
+     buildAssetsDir: '_nuxt/',
     cdnURL: '/valentines/'
   },
   nitro: {
