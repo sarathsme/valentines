@@ -1,5 +1,20 @@
 <template>
   <section class="section" aria-label="Letter">
+    <!-- Confetti overlay (used after saying Yes) -->
+    <canvas ref="confettiCanvasEl" class="confetti" aria-hidden="true" />
+
+    <Transition name="msgfade">
+      <div v-if="saidYes" class="yesGifWrap">
+        <img
+          class="yesGif"
+          src="/baby-today-laughing.gif"
+          alt="A laughing baby"
+          decoding="async"
+          loading="eager"
+        />
+      </div>
+    </Transition>
+
     <!-- Floating hearts (fixed to viewport) -->
     <button
       v-for="heart in (active ? hearts : [])"
@@ -97,7 +112,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 
 const props = withDefaults(
   defineProps<{
@@ -125,6 +140,7 @@ type Heart = {
 const hearts = ref<Heart[]>([])
 const letterOpen = ref(false)
 
+
 const noMessages = [
   'No',
   'Are you sure?',
@@ -146,8 +162,110 @@ const noClickCount = ref(0)
 const yesScale = ref(1)
 const currentMessage = ref<string>(noMessages[0] ?? '')
 const choiceLocked = ref(false)
+const saidYes = ref(false)
 
 const lastPointerAt = ref(0)
+
+const confettiCanvasEl = ref<HTMLCanvasElement | null>(null)
+let confettiRaf = 0
+
+type ConfettiParticle = {
+  x: number
+  y: number
+  vx: number
+  vy: number
+  size: number
+  rot: number
+  vr: number
+  color: string
+}
+
+function launchConfetti() {
+  if (typeof window === 'undefined') return
+
+  const prefersReduced = window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches
+  if (prefersReduced) return
+
+  const canvas = confettiCanvasEl.value
+  if (!canvas) return
+
+  const ctx = canvas.getContext('2d')
+  if (!ctx) return
+
+  const dpr = Math.max(1, Math.min(2, window.devicePixelRatio || 1))
+  const w = Math.max(1, window.innerWidth)
+  const h = Math.max(1, window.innerHeight)
+
+  canvas.width = Math.floor(w * dpr)
+  canvas.height = Math.floor(h * dpr)
+  canvas.style.width = `${w}px`
+  canvas.style.height = `${h}px`
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0)
+
+  const palette = ['#ff2e67', '#167cff', '#ffeef3', '#eaf0ff', '#ffd166']
+  const originX = w * 0.5
+  const originY = h * 0.42
+
+  const count = 120
+  const particles: ConfettiParticle[] = Array.from({ length: count }, () => {
+    const a = Math.random() * Math.PI * 2
+    const size = 3 + Math.random() * 7
+    const speed = 3.4 + Math.random() * 5.8
+    return {
+      x: originX,
+      y: originY,
+      vx: Math.cos(a) * speed,
+      vy: Math.sin(a) * speed - (3.2 + Math.random() * 2.4),
+      size,
+      rot: Math.random() * Math.PI,
+      vr: (Math.random() - 0.5) * 0.22,
+      color: palette[(Math.random() * palette.length) | 0]!,
+    }
+  })
+
+  const gravity = 0.16
+  const drag = 0.992
+  const start = performance.now()
+  const durationMs = 1350
+
+  if (confettiRaf) cancelAnimationFrame(confettiRaf)
+
+  const tick = (t: number) => {
+    const progress = Math.min(1, (t - start) / durationMs)
+    const alpha = 1 - progress
+
+    ctx.clearRect(0, 0, w, h)
+
+    for (const p of particles) {
+      p.vx *= drag
+      p.vy = p.vy * drag + gravity
+      p.x += p.vx
+      p.y += p.vy
+      p.rot += p.vr
+
+      ctx.save()
+      ctx.globalAlpha = Math.max(0, Math.min(1, alpha))
+      ctx.translate(p.x, p.y)
+      ctx.rotate(p.rot)
+      ctx.fillStyle = p.color
+      ctx.fillRect(-p.size * 0.5, -p.size * 0.5, p.size * 1.3, p.size)
+      ctx.restore()
+    }
+
+    if (progress < 1) {
+      confettiRaf = requestAnimationFrame(tick)
+    } else {
+      ctx.clearRect(0, 0, w, h)
+      confettiRaf = 0
+    }
+  }
+
+  confettiRaf = requestAnimationFrame(tick)
+}
+
+onBeforeUnmount(() => {
+  if (confettiRaf) cancelAnimationFrame(confettiRaf)
+})
 
 function clamp(n: number, min: number, max: number) {
   return Math.min(max, Math.max(min, n))
@@ -230,6 +348,8 @@ function handleNo() {
 function handleYes() {
   if (choiceLocked.value) return
   choiceLocked.value = true
+  saidYes.value = true
+  launchConfetti()
   emit('yes')
 }
 
@@ -267,6 +387,29 @@ function onYesClick() {
   gap: 46px;
   position: relative;
   overflow: hidden;
+}
+
+.confetti {
+  position: fixed;
+  inset: 0;
+  z-index: 999;
+  pointer-events: none;
+}
+
+.yesGifWrap {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  display: grid;
+  place-items: center;
+  pointer-events: none;
+  padding: 16px;
+}
+
+.yesGif {
+  width: min(320px, 78vw);
+  height: auto;
+  border-radius: 18px;
 }
 
 /* Text */
