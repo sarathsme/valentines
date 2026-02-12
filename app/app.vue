@@ -5,8 +5,8 @@
 
     <WelcomeGate
       v-if="!started"
-      title="Those sites stuck !! 💛"
-      subtitle="I made something for us..."
+      title="Those sites stuck !! Hi Reneesha! 💛"
+      subtitle="Can they do this???"
       button-text="Let’s Start"
       @start="startExperience"
     />
