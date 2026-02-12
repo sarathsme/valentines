@@ -329,7 +329,7 @@ onBeforeUnmount(() => {
 }
 
 .copy {
-  padding: 2px 2px 0;
+  padding: 15px 2px 0;
 }
 
 .kicker {

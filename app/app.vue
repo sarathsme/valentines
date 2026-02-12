@@ -5,7 +5,7 @@
 
     <WelcomeGate
       v-if="!started"
-      title="Hi my Thakkudu!!! 💛"
+      title="Thakkudu!!! 💛"
       subtitle="I made something for us..."
       button-text="Let’s Start"
       @start="startExperience"
